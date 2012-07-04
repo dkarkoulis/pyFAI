@@ -73,10 +73,14 @@ class test_mask(unittest.TestCase):
                 spline = os.path.basename(ds["spline"])
                 open(ds["poni"], "w").write(data.replace(" " + spline, " " + ds["spline"]))
     def test_OpenCL(self):
-        ids = pyFAI.azimuthalIntegrator.ocl.select_device(extensions=["cl_khr_int64_base_atomics"])
+        ocl = pyFAI.azimuthalIntegrator.ocl
+        ids = ocl.select_device(extensions=["cl_khr_int64_base_atomics"])
         if ids is None:
             logger.error("No suitable OpenCL device found")
             return
+        else:
+            logger.info("I found a suitable device %s: %s %s " % (ids, ocl.platforms[ids[0]], ocl.platforms[ids[0]].devices[ids[1]]))
+
         for ds in self.datasets:
             ai = pyFAI.load(ds["poni"])
             data = fabio.open(ds["img"]).data
@@ -89,7 +93,6 @@ class test_mask(unittest.TestCase):
             logger.info("For image %15s;\tspeed up is %.3fx;\trate is %.3f Hz" % (os.path.basename(ds["img"]), ((t1 - t0) / (t2 - t1)), 1. / (t2 - t1)))
             r = Rwp(ref, ocl)
             self.assertTrue(r < 6, "Rwp=%.3f for OpenCL processing of %s" % (r, ds))
-
 def test_suite_all_OpenCL():
     testSuite = unittest.TestSuite()
     testSuite.addTest(test_mask("test_OpenCL"))
